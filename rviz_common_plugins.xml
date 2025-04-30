@@ -1,0 +1,15 @@
+<library path="object_creator_plugins">
+    <class type="moveit_object_creator::ObjectPanel" base_class_type="rviz_common::Panel">
+      <description>A very basic panel for a tutorial</description>
+    </class>
+
+    <class
+      name="moveit_object_creator/ObjectTool"
+      type="moveit_object_creator::tools::ObjectTool"
+      base_class_type="rviz_common::Tool"
+    >
+      <description>
+        Publish a pose for the object.
+      </description>
+    </class>
+  </library>
