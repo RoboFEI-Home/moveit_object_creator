@@ -42,6 +42,7 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <rviz_common/panel.hpp>
 #include <rviz_common/ros_integration/ros_node_abstraction_iface.hpp>
 #include <std_msgs/msg/string.hpp>
@@ -80,6 +81,7 @@ protected:
   QLineEdit * textInput3_;
   QLineEdit * textInput4_;
   QSpinBox * numberSelector_;
+  QLineEdit * shelf_height_;
   geometry_msgs::msg::PoseStamped object_pose_;
   std::string reference_frame_ = "map";
 
