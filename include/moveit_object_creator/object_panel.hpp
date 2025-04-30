@@ -81,6 +81,7 @@ protected:
   QLineEdit * textInput4_;
   QSpinBox * numberSelector_;
   geometry_msgs::msg::PoseStamped object_pose_;
+  std::string reference_frame_ = "map";
 
 private Q_SLOTS:
   void buttonActivated();

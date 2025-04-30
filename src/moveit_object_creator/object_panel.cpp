@@ -20,7 +20,7 @@ ObjectPanel::ObjectPanel(QWidget * parent) : Panel(parent)
   comboBox_->addItem("Round table");
   comboBox_->addItem("Square table");
   layout->addWidget(comboBox_);
-  
+
   // Text input fields
   nameInput_ = new QLineEdit(this);
   nameInput_->setPlaceholderText("Object name");
@@ -79,6 +79,7 @@ void ObjectPanel::topicCallback(const geometry_msgs::msg::PoseStamped& pose)
 {
   // We can use the data in the message to update the label
   object_pose_ = pose;
+  reference_frame_ = pose.header.frame_id;
 }
 
 geometry_msgs::msg::Pose ObjectPanel::applyPoseOffset(const geometry_msgs::msg::Pose& base_pose, double dx, double dy, double dz) {
@@ -119,7 +120,7 @@ void ObjectPanel::buttonActivated()
 
   if (selected == "Shelf") {
     moveit_msgs::msg::AttachedCollisionObject attached_object;
-    attached_object.object.header.frame_id = "manipulator_base_link";  // important: object_pose_ is in map frame
+    attached_object.object.header.frame_id = reference_frame_;
     attached_object.object.id = nameInput_->text().toStdString();
 
     double width = textInput1_->text().toDouble();     // X direction
@@ -134,7 +135,7 @@ void ObjectPanel::buttonActivated()
     back_wall.dimensions = {thickness, width, height};
     attached_object.object.primitives.push_back(back_wall);
     attached_object.object.primitive_poses.push_back(
-        applyPoseOffset(object_pose_.pose, -depth / 2.0 + thickness / 2.0, 0, 0));
+        applyPoseOffset(object_pose_.pose, -depth / 2.0 + thickness / 2.0, 0, (height / 2.0)));
 
     // Left wall — thickness x depth x height
     shape_msgs::msg::SolidPrimitive left_wall;
@@ -142,7 +143,7 @@ void ObjectPanel::buttonActivated()
     left_wall.dimensions = {depth, thickness, height};
     attached_object.object.primitives.push_back(left_wall);
     attached_object.object.primitive_poses.push_back(
-        applyPoseOffset(object_pose_.pose, 0, -width / 2.0 - thickness / 2.0, 0));
+        applyPoseOffset(object_pose_.pose, 0, -width / 2.0 - thickness / 2.0, (height / 2.0)));
 
     // Right wall — thickness x depth x height
     shape_msgs::msg::SolidPrimitive right_wall;
@@ -150,18 +151,26 @@ void ObjectPanel::buttonActivated()
     right_wall.dimensions = {depth, thickness, height};
     attached_object.object.primitives.push_back(right_wall);
     attached_object.object.primitive_poses.push_back(
-        applyPoseOffset(object_pose_.pose, 0, width / 2.0 + thickness / 2.0, 0));
+        applyPoseOffset(object_pose_.pose, 0, width / 2.0 + thickness / 2.0, (height / 2.0)));
 
     // Horizontal shelf planes — width x depth x thickness
     for (int i = 0; i < number_of_shelves + 2; ++i) {
-        shape_msgs::msg::SolidPrimitive shelf;
-        shelf.type = shelf.BOX;
-        shelf.dimensions = {depth, width + (thickness*2), thickness};
-        attached_object.object.primitives.push_back(shelf);
-
-        double z_offset = -(height/2) - (thickness/2) + (i) * (height / (number_of_shelves + 1));
-        attached_object.object.primitive_poses.push_back(
-            applyPoseOffset(object_pose_.pose, 0, 0, z_offset));
+      shape_msgs::msg::SolidPrimitive shelf;
+      shelf.type = shelf.BOX;
+      shelf.dimensions = {depth, width + (thickness*2), thickness};
+      attached_object.object.primitives.push_back(shelf);
+    
+      double z_offset;
+      if (i == number_of_shelves + 1) {
+        // Top shelf — place it so its **top** aligns with the outer edge of side walls
+        z_offset = height - (thickness / 2.0);
+      } else {
+        // Regular shelf — center placed normally
+        z_offset = (thickness / 2.0) + i * (height / (number_of_shelves + 1));
+      }
+    
+      attached_object.object.primitive_poses.push_back(
+          applyPoseOffset(object_pose_.pose, 0, 0, z_offset));
     }
 
     attached_object.object.operation = attached_object.object.ADD;
@@ -174,7 +183,7 @@ void ObjectPanel::buttonActivated()
   } else if (selected == "Round table") {
     moveit_msgs::msg::AttachedCollisionObject attached_object;
     /* The header must contain a valid TF frame*/
-    attached_object.object.header.frame_id = "manipulator_base_link";
+    attached_object.object.header.frame_id = reference_frame_;
     /* The id of the object */
     attached_object.object.id = nameInput_->text().toStdString();
 
@@ -197,7 +206,7 @@ void ObjectPanel::buttonActivated()
   } else if (selected == "Square table") {
     moveit_msgs::msg::AttachedCollisionObject attached_object;
     /* The header must contain a valid TF frame*/
-    attached_object.object.header.frame_id = "manipulator_base_link";
+    attached_object.object.header.frame_id = reference_frame_;
     /* The id of the object */
     attached_object.object.id = nameInput_->text().toStdString();
 
